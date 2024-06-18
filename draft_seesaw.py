@@ -1,3 +1,6 @@
+import os
+import pickle
+import time
 import numpy as np
 import opt_einsum
 from tqdm import tqdm
@@ -49,6 +52,7 @@ def get_GME_pure_seesaw(np0:np.ndarray, converge_eps:float=1e-7, num_repeat:int=
 
 
 def get_GME_subspace_seesaw(np0:np.ndarray, converge_eps:float=1e-7, num_repeat:int=1, maxiter=1000, psi_list=None, seed=None):
+    # seesaw algorithm doi.org/10.1103/PhysRevA.84.022323
     N0 = np0.ndim-1
     assert (N0>=2) and all(x>=2 for x in np0.shape[1:])
     dim_list = np0.shape[1:]
@@ -118,6 +122,47 @@ def demo_compare_gradient_descent_with_seesaw():
         np_list = numqi.matrix_space.get_completed_entangled_subspace((dimA, dimB, dimC), kind='quant-ph/0409032')[0]
         model = numqi.matrix_space.DetectCanonicalPolyadicRankModel((dimA, dimB, dimC), rank=1)
         model.set_target(np_list)
+        tmp0 = time.time()
         theta_optim1 = numqi.optimize.minimize(model, **kwargs_gd)
+        t0 = time.time() - tmp0
+        tmp0 = time.time()
         gme,psi_list = get_GME_subspace_seesaw(np_list, **kwargs_seesaw)
-        print(f'[{dimA}x{dimB}x{dimC}] loss(GD)={theta_optim1.fun}, loss(seesaw)={gme}, delta={theta_optim1.fun-gme}')
+        t1 = time.time() - tmp0
+        print(f'[{dimA}x{dimB}x{dimC}] loss(GD)={theta_optim1.fun}, delta={theta_optim1.fun-gme}, time(GD)= {t0:.3f}, time(Seesaw)={t1:.3f}')
+
+
+def demo_compare_with_seesaw_dicke():
+    datapath = 'data/compare_with_seesaw_dicke.pkl'
+    if os.path.exists(datapath):
+        with open(datapath, 'rb') as fid:
+            import pickle
+            all_data = pickle.load(fid)
+    else:
+        n_k_list = [(5,1),(5,2),(5,3),(6,1),(6,2),(6,3),(7,1),(7,2),(7,3)]
+        all_data = dict()
+        kwargs_gd = dict(theta0='uniform', tol=1e-10, num_repeat=3, print_every_round=0)
+        kwargs_seesaw = dict(converge_eps=1e-10, num_repeat=3, maxiter=2000)
+        for num_qubit,dicke_k in n_k_list:
+            np0 = numqi.dicke.Dicke(num_qubit-dicke_k, dicke_k).reshape([2]*num_qubit)
+            ret_ = numqi.state.get_qubit_dicke_state_GME(num_qubit, dicke_k)
+            model = numqi.matrix_space.DetectCanonicalPolyadicRankModel([2]*num_qubit, rank=1)
+            model.set_target(np0)
+            model() # precompute
+            tmp0 = time.time()
+            ret_gd = numqi.optimize.minimize(model, **kwargs_gd).fun
+            t0 = time.time() - tmp0
+            tmp0 = time.time()
+            ret_seesaw = get_GME_pure_seesaw(np0, **kwargs_seesaw)[0]
+            t1 = time.time() - tmp0
+            all_data[(num_qubit,dicke_k)] = (ret_gd, ret_seesaw, ret_, t0, t1)
+        with open(datapath, 'wb') as fid:
+            import pickle
+            pickle.dump(all_data, fid)
+
+    for (num_qubit,dicke_k), (ret_gd, ret_seesaw, ret_, t0, t1) in all_data.items():
+        print(f'[Dicke({num_qubit},{dicke_k})] analytical={ret_} error(GD)={ret_gd-ret_}, error(seesaw)={ret_seesaw-ret_}, time(GD)={t0:.5f}, time(Seesaw)={t1:.5f}')
+
+
+if __name__=='__main__':
+    # demo_compare_gradient_descent_with_seesaw()
+    demo_compare_with_seesaw_dicke()
