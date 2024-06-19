@@ -143,6 +143,7 @@ def demo_compare_with_seesaw_dicke():
         kwargs_gd = dict(theta0='uniform', tol=1e-10, num_repeat=3, print_every_round=0)
         kwargs_seesaw = dict(converge_eps=1e-10, num_repeat=3, maxiter=2000)
         for num_qubit,dicke_k in n_k_list:
+            print(f'[{num_qubit},{dicke_k}]')
             np0 = numqi.dicke.Dicke(num_qubit-dicke_k, dicke_k).reshape([2]*num_qubit)
             ret_ = numqi.state.get_qubit_dicke_state_GME(num_qubit, dicke_k)
             model = numqi.matrix_space.DetectCanonicalPolyadicRankModel([2]*num_qubit, rank=1)
@@ -154,13 +155,24 @@ def demo_compare_with_seesaw_dicke():
             tmp0 = time.time()
             ret_seesaw = get_GME_pure_seesaw(np0, **kwargs_seesaw)[0]
             t1 = time.time() - tmp0
-            all_data[(num_qubit,dicke_k)] = (ret_gd, ret_seesaw, ret_, t0, t1)
+            if num_qubit>=7:
+                ret_ppt = None
+                t2 = None
+            else:
+                tmp0 = time.time()
+                ret_ppt = numqi.matrix_space.get_geometric_measure_ppt(np0, [2]*num_qubit)
+                t2 = time.time() - tmp0
+            all_data[(num_qubit,dicke_k)] = (ret_gd, ret_seesaw, ret_ppt, ret_, t0, t1, t2)
         with open(datapath, 'wb') as fid:
             import pickle
             pickle.dump(all_data, fid)
-
-    for (num_qubit,dicke_k), (ret_gd, ret_seesaw, ret_, t0, t1) in all_data.items():
-        print(f'[Dicke({num_qubit},{dicke_k})] analytical={ret_} error(GD)={ret_gd-ret_}, error(seesaw)={ret_seesaw-ret_}, time(GD)={t0:.5f}, time(Seesaw)={t1:.5f}')
+    print('| (n,k) | analytical | err(GD) | err(seesaw) | err(PPT) | time(GD) | time(seesaw) | time(PPT) |')
+    print('| :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |')
+    for (num_qubit,dicke_k), (ret_gd, ret_seesaw, ret_ppt, ret_, t0, t1, t2) in all_data.items():
+        tmp0 = f'{abs(ret_-ret_ppt):.3g}' if ret_ppt is not None else 'None'
+        tmp1 = f'{t2:.5f}' if t2 is not None else 'None'
+        print(f'|({num_qubit},{dicke_k})| {ret_:.4f} | {abs(ret_gd-ret_):.3g} | '
+                    f' {abs(ret_seesaw-ret_):.3g} | {tmp0} | {t0:.5f} | {t1:.5f} | {tmp1} |')
 
 
 if __name__=='__main__':
