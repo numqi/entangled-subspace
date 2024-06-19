@@ -1,5 +1,7 @@
 # entangled subspace
 
+[![DOI](https://zenodo.org/badge/639765941.svg)](https://zenodo.org/doi/10.5281/zenodo.7995115)
+
 This repository is to reproduce results in the paper [arxiv-link](https://arxiv.org/abs/2311.10353) "Quantifying Subspace Entanglement with Geometric Measures"
 
 PS: this folder previously located in `project/entangled-subspace` of the `github/numqi/numqi` repository.
