@@ -4,7 +4,22 @@
 
 This repository is to reproduce results in the paper [arxiv-link](https://arxiv.org/abs/2311.10353) "Quantifying Subspace Entanglement with Geometric Measures"
 
-PS: this folder previously located in `project/entangled-subspace` of the `github/numqi/numqi` repository.
+🚀 Exciting News! We've launched the `numqi` package [github/numqi](https://github.com/numqi/numqi), combining all the functionalities of this repository and even more! 🌟 To dive into these features, just install `numqi` using `pip install numqi`, and explore the relevant functions within the package. 🛠️
+
+## quick start
+
+This project is based on `numqi` package [github-link](https://github.com/numqi/numqi), which is a package for numerical optimization for quantum information. To install `numqi`, run the following command (see [numqi-doc](https://numqi.github.io/numqi/installation/) for detailed installation instruction):
+
+```bash
+pip install numqi
+```
+
+Then, clone this repository and cd into the directory
+
+```bash
+git clone git@github.com:numqi/entangled-subspace.git
+cd entangled-subspace
+```
 
 1. link
    * [github/tensorspace](https://github.com/thetensor-space/TensorSpace) magma based
